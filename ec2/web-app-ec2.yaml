@@ -1,0 +1,35 @@
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH & HTTPD access via port 22 & 80 respectively
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      VpcId: {'Fn::ImportValue': 'dev-mit-vpc-VPC'}
+      Tags:
+      - Key: Name
+        Value: 'web-app-sg'
+  WebNetworkInterface:
+    Type: 'AWS::EC2::NetworkInterface'
+    Properties:
+      GroupSet:
+      - !Ref SecurityGroup
+      SubnetId: {'Fn::Select': [0, {'Fn::Split': [',',{'Fn::ImportValue': 'dev-mit-vpc-SubnetsPublic'}]}]}
+  WebServerInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: 't2.micro'
+      ImageId: 'ami-f5f41398'  # this value should be in prameter map and based on region and select the appropiate image id
+      NetworkInterfaces:
+      - DeviceIndex: 0
+        NetworkInterfaceId: !Ref WebNetworkInterface
+      Tags:
+      - Key: Name
+        Value: 'web-app'
